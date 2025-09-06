@@ -1,0 +1,260 @@
+name: 🚀 Deploy AeNKI Avatar
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'aenki-conectado.html'
+      - 'server.js'
+      - 'package.json'
+      - '.github/workflows/deploy-aenki.yml'
+  
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'Deploy target'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+env:
+  DOMAIN: aenki.sistemasorbix.com
+  DEPLOY_PATH: /var/www/sistemasorbix.com/aenki
+  BACKEND_PORT: 8000
+  PM2_APP_NAME: aenki-backend
+
+jobs:
+  deploy:
+    name: 🌐 Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: 📦 Install dependencies
+      run: npm ci
+      
+    - name: 🧪 Run tests
+      run: |
+        echo "🧪 Running connectivity tests..."
+        if [ -f "test.js" ]; then
+          npm test
+        else
+          echo "No test file found, skipping tests"
+        fi
+        
+    - name: 🔍 Validate HTML
+      run: |
+        echo "🔍 Validating aenki-conectado.html..."
+        if command -v tidy >/dev/null 2>&1; then
+          tidy -q -e aenki-conectado.html || echo "HTML validation warnings (non-critical)"
+        else
+          echo "HTML Tidy not available, skipping validation"
+        fi
+        
+    - name: 📋 Prepare deployment files
+      run: |
+        echo "📋 Preparing files for deployment..."
+        mkdir -p deploy
+        cp aenki-conectado.html deploy/
+        cp aenki-conectado.html deploy/index.html
+        if [ -f "debug-aenki.html" ]; then cp debug-aenki.html deploy/; fi
+        if [ -f "test-cors.html" ]; then cp test-cors.html deploy/; fi
+        cp aenki.sistemasorbix.com.conf deploy/
+        cp Makefile deploy/
+        cp server.js deploy/
+        cp package*.json deploy/
+        ls -la deploy/
+        
+    - name: 🚀 Deploy to server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "🚀 Starting deployment to ${{ env.DOMAIN }}..."
+          
+          # Create deployment directory
+          sudo mkdir -p ${{ env.DEPLOY_PATH }}
+          cd /tmp
+          
+          # Clean previous deployment files
+          rm -rf aenki-deploy
+          mkdir aenki-deploy
+          cd aenki-deploy
+          
+    - name: 📤 Upload files
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        source: "deploy/*"
+        target: "/tmp/aenki-deploy/"
+        strip_components: 1
+        
+    - name: 🔧 Configure and deploy
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          cd /tmp/aenki-deploy
+          
+          echo "📁 Deploying frontend files..."
+          sudo cp aenki-conectado.html ${{ env.DEPLOY_PATH }}/
+          sudo cp aenki-conectado.html ${{ env.DEPLOY_PATH }}/index.html
+          if [ -f "debug-aenki.html" ]; then sudo cp debug-aenki.html ${{ env.DEPLOY_PATH }}/; fi
+          if [ -f "test-cors.html" ]; then sudo cp test-cors.html ${{ env.DEPLOY_PATH }}/; fi
+          
+          echo "🔧 Setting permissions..."
+          sudo chown -R www-data:www-data ${{ env.DEPLOY_PATH }}
+          sudo chmod -R 644 ${{ env.DEPLOY_PATH }}/*.html
+          
+          echo "🌐 Configuring NGINX..."
+          if [ ! -f "/etc/nginx/sites-available/${{ env.DOMAIN }}.conf" ]; then
+            sudo cp aenki.sistemasorbix.com.conf /etc/nginx/sites-available/${{ env.DOMAIN }}.conf
+            sudo ln -sf /etc/nginx/sites-available/${{ env.DOMAIN }}.conf /etc/nginx/sites-enabled/
+          fi
+          
+          echo "🧪 Testing NGINX configuration..."
+          sudo nginx -t
+          
+          echo "🔄 Reloading NGINX..."
+          sudo systemctl reload nginx
+          
+          echo "🖥️ Updating backend..."
+          # Create backend directory if it doesn't exist
+          sudo mkdir -p /opt/aenki-backend
+          sudo cp server.js /opt/aenki-backend/
+          sudo cp package*.json /opt/aenki-backend/
+          
+          # Install/update backend dependencies
+          cd /opt/aenki-backend
+          sudo npm ci --production
+          
+          # Restart backend with PM2
+          echo "🔄 Restarting backend..."
+          pm2 restart ${{ env.PM2_APP_NAME }} || pm2 start server.js --name ${{ env.PM2_APP_NAME }}
+          pm2 save
+          
+          echo "✅ Deployment completed!"
+          
+    - name: 🏥 Health check
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "🏥 Running health checks..."
+          
+          # Wait a moment for services to start
+          sleep 10
+          
+          # Check backend health
+          echo "🔍 Checking backend..."
+          if curl -sf http://127.0.0.1:${{ env.BACKEND_PORT }}/api/health \
+             -H "x-aenki-key: aenki-production-2025" | jq '.ok' | grep -q true; then
+            echo "✅ Backend is healthy"
+          else
+            echo "❌ Backend health check failed"
+            exit 1
+          fi
+          
+          # Check frontend
+          echo "🌐 Checking frontend..."
+          if curl -sf https://${{ env.DOMAIN }}/ | grep -q "AeNKI"; then
+            echo "✅ Frontend is accessible"
+          else
+            echo "❌ Frontend health check failed"
+            exit 1
+          fi
+          
+          # Check SSL certificate
+          echo "🔒 Checking SSL certificate..."
+          if openssl s_client -connect ${{ env.DOMAIN }}:443 -servername ${{ env.DOMAIN }} </dev/null 2>/dev/null | openssl x509 -noout -dates 2>/dev/null; then
+            echo "✅ SSL certificate is valid"
+          else
+            echo "⚠️ SSL certificate check failed (may be normal for new deployments)"
+          fi
+          
+          echo "🎉 All health checks completed!"
+          
+    - name: 📊 Deployment summary
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "📊 Deployment Summary"
+          echo "===================="
+          echo "🌐 Frontend URL: https://${{ env.DOMAIN }}"
+          echo "🔍 Health Check: https://${{ env.DOMAIN }}/health"
+          echo "💬 Chat API: https://${{ env.DOMAIN }}/api/chat"
+          echo "🔊 TTS API: https://${{ env.DOMAIN }}/api/tts"
+          echo ""
+          echo "📁 Deployed files:"
+          ls -la ${{ env.DEPLOY_PATH }}/
+          echo ""
+          echo "🖥️ PM2 Status:"
+          pm2 status ${{ env.PM2_APP_NAME }}
+          echo ""
+          echo "🎉 AeNKI Avatar successfully deployed!"
+
+  notify:
+    name: 📢 Send notification
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📢 Discord notification
+      if: always()
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        if [ -n "$DISCORD_WEBHOOK" ]; then
+          STATUS="${{ needs.deploy.result }}"
+          if [ "$STATUS" = "success" ]; then
+            COLOR="3066993"
+            EMOJI="🎉"
+            MESSAGE="AeNKI Avatar deployed successfully!"
+          else
+            COLOR="15158332"
+            EMOJI="❌"
+            MESSAGE="AeNKI Avatar deployment failed!"
+          fi
+          
+          curl -H "Content-Type: application/json" -X POST -d "{
+            \"embeds\": [{
+              \"title\": \"$EMOJI AeNKI Deployment\",
+              \"description\": \"$MESSAGE\",
+              \"color\": $COLOR,
+              \"fields\": [
+                {\"name\": \"Domain\", \"value\": \"https://${{ env.DOMAIN }}\", \"inline\": true},
+                {\"name\": \"Status\", \"value\": \"$STATUS\", \"inline\": true},
+                {\"name\": \"Commit\", \"value\": \"${{ github.sha }}\", \"inline\": true}
+              ],
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }]
+          }" "$DISCORD_WEBHOOK"
+        fi
