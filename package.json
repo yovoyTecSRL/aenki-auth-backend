@@ -1,0 +1,60 @@
+{
+  "name": "aenki-auth-node",
+  "version": "1.0.0",
+  "description": "AeNKI JWT Authentication Service for production deployment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "dev:watch": "nodemon server.js",
+    "test": "node test.js",
+    "test:health": "node -e \"require('http').get('http://127.0.0.1:8000/api/health',r=>r.pipe(process.stdout))\"",
+    "sentinel": "node orbix_sentinel_scan.js",
+    "sentinel:bg": "start \"AeNKI Sentinel\" cmd /k \"node orbix_sentinel_scan.js\"",
+    "setup-copilot": "npm run setup && npm run sentinel:bg",
+    "setup": "npm install && npm run test:health",
+    "check": "npm run test:health && echo 🎯 AeNKI Backend Status Check Complete",
+    "auto-start": "start.bat",
+    "logs": "type logs\\server.log",
+    "logs:sentinel": "type logs\\sentinel.log",
+    "status": "type AVATAR_STATUS.md"
+  },
+  "keywords": [
+    "jwt",
+    "auth",
+    "express",
+    "aenki",
+    "sistemasorbix"
+  ],
+  "author": "SistemasOrbix <info@sistemasorbix.com>",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^6.7.0",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.6.0",
+    "morgan": "^1.10.1",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^2.7.0",
+    "pdf-parse": "^1.1.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yovoyTecSRL/aenki-auth-node.git"
+  },
+  "homepage": "https://aenki.idotec.online",
+  "bugs": {
+    "url": "https://github.com/yovoyTecSRL/aenki-auth-node/issues"
+  }
+}

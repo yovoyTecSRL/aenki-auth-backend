@@ -1,0 +1,36 @@
+### Health Check (NO AUTH REQUIRED)
+GET http://127.0.0.1:8000/api/health
+
+### Health Check (CON AUTH)
+GET http://127.0.0.1:8000/api/health
+x-aenki-key: dev
+
+### Chat - Test básico
+POST http://127.0.0.1:8000/api/chat
+Content-Type: application/json
+x-aenki-key: dev
+
+{
+  "text": "Hola AeNKI",
+  "history": [],
+  "avatarId": "default"
+}
+
+### TTS - Test básico
+POST http://127.0.0.1:8000/api/tts
+Content-Type: application/json
+x-aenki-key: dev
+
+{
+  "text": "Hola, soy AeNKI"
+}
+
+### Test SIN AUTH (debe mostrar warning en dev)
+POST http://127.0.0.1:8000/api/chat
+Content-Type: application/json
+
+{
+  "text": "Test sin auth",
+  "history": [],
+  "avatarId": "test"
+}

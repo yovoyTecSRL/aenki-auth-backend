@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeNKI Backend - API Test Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .api-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .api-section h2 {
+            color: #2d3748;
+            margin-top: 0;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .response {
+            background: #1a202c;
+            color: #68d391;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #2d3748;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success { background: #c6f6d5; color: #22543d; }
+        .status.error { background: #fed7d7; color: #742a2a; }
+        .status.warning { background: #fefcbf; color: #744210; }
+        .auth-warning {
+            background: #fef5e7;
+            border: 1px solid #f6ad55;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 AeNKI Backend API</h1>
+        
+        <div class="auth-warning">
+            <strong>⚠️ Autenticación:</strong> La mayoría de endpoints requieren el header <code>x-aenki-key</code>. 
+            En modo desarrollo, algunos endpoints funcionan sin autenticación.
+        </div>
+
+        <div class="grid">
+            <!-- Health Check -->
+            <div class="api-section">
+                <h2>🏥 Health Check</h2>
+                <button onclick="checkHealth()">Check Health</button>
+                <div id="health-response" class="response" style="display:none;"></div>
+            </div>
+
+            <!-- Text-to-Speech -->
+            <div class="api-section">
+                <h2>🗣️ Text-to-Speech</h2>
+                <div class="input-group">
+                    <label>Texto:</label>
+                    <textarea id="tts-text" placeholder="Hola, soy AeNKI...">Hola, soy AeNKI, tu asistente de longevidad y salud.</textarea>
+                </div>
+                <button onclick="synthesizeText()">Generate Audio</button>
+                <div id="tts-response" class="response" style="display:none;"></div>
+            </div>
+
+            <!-- Training -->
+            <div class="api-section">
+                <h2>🧠 Training</h2>
+                <div class="input-group">
+                    <label>Contenido:</label>
+                    <textarea id="train-content" placeholder="Contenido para entrenar...">La restricción calórica ha demostrado extender la longevidad en múltiples especies.</textarea>
+                </div>
+                <button onclick="trainContent()">Train AeNKI</button>
+                <button onclick="getTrainingStatus()">Get Status</button>
+                <div id="train-response" class="response" style="display:none;"></div>
+            </div>
+
+            <!-- Chat -->
+            <div class="api-section">
+                <h2>💬 Chat</h2>
+                <div class="input-group">
+                    <label>Mensaje:</label>
+                    <textarea id="chat-message" placeholder="¿Cuáles son los beneficios de...?">¿Cuáles son los beneficios de la restricción calórica para la longevidad?</textarea>
+                </div>
+                <button onclick="chatWithAeNKI()">Send Message</button>
+                <button onclick="getChatCapabilities()">Get Capabilities</button>
+                <div id="chat-response" class="response" style="display:none;"></div>
+            </div>
+
+            <!-- Search -->
+            <div class="api-section">
+                <h2>🔍 Search</h2>
+                <div class="input-group">
+                    <label>Query:</label>
+                    <input type="text" id="search-query" placeholder="longevidad" value="longevidad">
+                </div>
+                <button onclick="searchKnowledge()">Search</button>
+                <button onclick="getSearchSuggestions()">Get Suggestions</button>
+                <div id="search-response" class="response" style="display:none;"></div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="api-section">
+                <h2>📊 Statistics</h2>
+                <button onclick="getStats()">Get Stats</button>
+                <button onclick="getKnowledgeStats()">Knowledge Stats</button>
+                <button onclick="getSystemHealth()">System Health</button>
+                <div id="stats-response" class="response" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        const DEFAULT_HEADERS = {
+            'Content-Type': 'application/json',
+            'x-aenki-key': 'dev-mode-key' // In dev mode, this can be anything
+        };
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(API_BASE + endpoint, {
+                    headers: DEFAULT_HEADERS,
+                    ...options
+                });
+                
+                const data = await response.json();
+                return { status: response.status, data };
+            } catch (error) {
+                return { status: 0, data: { error: error.message } };
+            }
+        }
+
+        function displayResponse(elementId, response) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.textContent = JSON.stringify(response, null, 2);
+        }
+
+        async function checkHealth() {
+            const response = await apiCall('/api/health', { method: 'GET' });
+            displayResponse('health-response', response);
+        }
+
+        async function synthesizeText() {
+            const text = document.getElementById('tts-text').value;
+            const response = await apiCall('/api/tts', {
+                method: 'POST',
+                body: JSON.stringify({ text })
+            });
+            displayResponse('tts-response', response);
+        }
+
+        async function trainContent() {
+            const content = document.getElementById('train-content').value;
+            const response = await apiCall('/api/train', {
+                method: 'POST',
+                body: JSON.stringify({ content })
+            });
+            displayResponse('train-response', response);
+        }
+
+        async function getTrainingStatus() {
+            const response = await apiCall('/api/train/status', { method: 'GET' });
+            displayResponse('train-response', response);
+        }
+
+        async function chatWithAeNKI() {
+            const message = document.getElementById('chat-message').value;
+            const response = await apiCall('/api/chat', {
+                method: 'POST',
+                body: JSON.stringify({ message, searchKnowledge: true })
+            });
+            displayResponse('chat-response', response);
+        }
+
+        async function getChatCapabilities() {
+            const response = await apiCall('/api/chat/capabilities', { method: 'GET' });
+            displayResponse('chat-response', response);
+        }
+
+        async function searchKnowledge() {
+            const query = document.getElementById('search-query').value;
+            const response = await apiCall(`/api/search?query=${encodeURIComponent(query)}&threshold=0.6`, { method: 'GET' });
+            displayResponse('search-response', response);
+        }
+
+        async function getSearchSuggestions() {
+            const query = document.getElementById('search-query').value;
+            const response = await apiCall(`/api/search/suggestions?q=${encodeURIComponent(query)}`, { method: 'GET' });
+            displayResponse('search-response', response);
+        }
+
+        async function getStats() {
+            const response = await apiCall('/api/stats', { method: 'GET' });
+            displayResponse('stats-response', response);
+        }
+
+        async function getKnowledgeStats() {
+            const response = await apiCall('/api/stats/knowledge', { method: 'GET' });
+            displayResponse('stats-response', response);
+        }
+
+        async function getSystemHealth() {
+            const response = await apiCall('/api/stats/health', { method: 'GET' });
+            displayResponse('stats-response', response);
+        }
+
+        // Auto-check health on page load
+        window.addEventListener('load', () => {
+            setTimeout(checkHealth, 1000);
+        });
+    </script>
+</body>
+</html>

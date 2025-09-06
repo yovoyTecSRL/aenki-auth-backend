@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeNKI - Avatar de Longevidad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a3a);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 229, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+        }
+        
+        .header h1 {
+            color: #00e5ff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .health-status {
+            color: #4CAF50;
+            font-size: 0.9rem;
+        }
+        
+        .main-container {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .avatar-container {
+            flex: 1;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.02);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #avatar {
+            width: 400px;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 229, 255, 0.3);
+            margin-bottom: 1rem;
+        }
+        
+        .status {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        #loading {
+            color: #ffa500;
+            font-weight: bold;
+        }
+        
+        #status {
+            color: #00e5ff;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .chat-container {
+            flex: 1;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            max-width: 500px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        #text {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid rgba(0, 229, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        #text:focus {
+            outline: none;
+            border-color: #00e5ff;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        #send {
+            background: linear-gradient(45deg, #00e5ff, #0288d1);
+            color: white;
+            flex: 1;
+        }
+        
+        #send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 229, 255, 0.4);
+        }
+        
+        #send:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        #stop {
+            background: linear-gradient(45deg, #ff5722, #d32f2f);
+            color: white;
+            padding: 0.8rem;
+        }
+        
+        #stop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .test-btn {
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .test-btn:hover {
+            background: rgba(76, 175, 80, 1);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 87, 34, 0.9);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .avatar-container {
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            #avatar {
+                width: 300px;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 AeNKI - Avatar de Longevidad</h1>
+        <div id="health" class="health-status">Conectando al backend...</div>
+    </div>
+
+    <div class="main-container">
+        <div class="avatar-container">
+            <div id="avatar"></div>
+            <div class="status">
+                <div id="loading">Inicializando...</div>
+                <div id="status">Preparando avatar...</div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="controls">
+                <div class="input-group">
+                    <textarea id="text" placeholder="Pregúntame sobre longevidad y bienestar..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button id="send">Enviar</button>
+                    <button id="stop">🛑</button>
+                </div>
+
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testHealth()">Test Health</button>
+                    <button class="test-btn" onclick="testChat()">Test Chat</button>
+                    <button class="test-btn" onclick="testTTS()">Test TTS</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script type="module">
+        import { TalkingHead } from "https://cdn.jsdelivr.net/npm/talkinghead@1.1.0/dist/talkinghead.mjs";
+
+        // API Base: usa same-origin o localhost para desarrollo
+        const API_BASE = location.origin.startsWith('file:') ? 'http://127.0.0.1:8000' : '';
+        
+        // Token temporal - configurado directamente para desarrollo
+        const TOKEN = window.TOKEN || 'dev-aenki-token';
+
+        const statusEl = document.getElementById('status');
+        const healthEl = document.getElementById('health');
+        const loadingEl = document.getElementById('loading');
+        const inputEl = document.getElementById('text');
+        const sendBtn = document.getElementById('send');
+        const stopBtn = document.getElementById('stop');
+        const toastEl = document.getElementById('toast');
+
+        let head, history = [];
+        const avatarId = 'default';
+
+        // Health check y configuración inicial
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`, {
+                    headers: { 'x-aenki-key': TOKEN || '' }
+                });
+                const health = await response.json();
+                
+                if (health.ok) {
+                    healthEl.textContent = `Modelo: ${health.model} | Key: ${health.hasOpenAIKey ? 'OK' : 'NO'}`;
+                    healthEl.style.color = health.hasOpenAIKey ? '#00e5ff' : '#ffa500';
+                } else {
+                    healthEl.textContent = 'Backend no disponible';
+                    healthEl.style.color = '#ff453a';
+                }
+            } catch (error) {
+                healthEl.textContent = 'Sin conexión al backend';
+                healthEl.style.color = '#ff453a';
+                showToast('Error de conexión con el backend');
+            }
+        }
+
+        async function initAvatar() {
+            console.log('🤖 Iniciando avatar...');
+            const nodeAvatar = document.getElementById('avatar');
+            console.log('📍 Elemento avatar encontrado:', !!nodeAvatar);
+            
+            // Configuración del avatar
+            let ttsEndpoint = `${API_BASE}/api/tts`;
+            let voiceId = 'es-ES-Standard-A';
+            
+            console.log('🔊 TTS Endpoint:', ttsEndpoint);
+
+            head = new TalkingHead(nodeAvatar, {
+                ttsEndpoint: ttsEndpoint,
+                ttsApikey: TOKEN || '',
+                lipsyncModules: ["es", "en"],
+                cameraView: "upper"
+            });
+
+            console.log('🎭 TalkingHead creado:', !!head);
+
+            try {
+                loadingEl.textContent = "Cargando modelo…";
+                console.log('📥 Cargando modelo 3D...');
+                await head.showAvatar({
+                    url: 'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png',
+                    body: 'F',
+                    avatarMood: 'neutral',
+                    ttsLang: "es-ES",
+                    ttsVoice: voiceId,
+                    lipsyncLang: 'es'
+                }, (ev) => {
+                    if (ev.lengthComputable) {
+                        const val = Math.min(100, Math.round(ev.loaded / ev.total * 100));
+                        loadingEl.textContent = `Cargando ${val}%`;
+                    }
+                });
+                loadingEl.style.display = 'none';
+                statusEl.textContent = "Listo";
+            } catch (err) {
+                console.error(err);
+                loadingEl.textContent = `Error: ${err}`;
+                showToast('Error al cargar el avatar');
+            }
+
+            // Pausa animación cuando pestaña no visible
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible") head.start(); 
+                else head.stop();
+            });
+        }
+
+        async function askAenki(text) {
+            const response = await fetch(`${API_BASE}/api/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-aenki-key': TOKEN || ''
+                },
+                body: JSON.stringify({ text, history, avatarId })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                if (response.status === 502) {
+                    throw new Error('Servidor no disponible (502)');
+                }
+                throw new Error(data?.error || 'Fallo /api/chat');
+            }
+            
+            return data.reply || '';
+        }
+
+        // UX helpers
+        function setBusy(busy) {
+            sendBtn.disabled = busy;
+            inputEl.disabled = busy;
+            statusEl.textContent = busy ? 'Pensando…' : 'Listo';
+        }
+
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 3000);
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', async () => {
+            const userText = (inputEl.value || '').trim();
+            if (!userText) return inputEl.focus();
+
+            setBusy(true);
+            try {
+                history.push({ role:'user', content:userText });
+                const reply = await askAenki(userText);
+                history.push({ role:'assistant', content:reply });
+
+                // Habla con el avatar
+                await head.speakText(reply);
+            } catch (error) {
+                console.error(error);
+                showToast(error.message);
+            } finally {
+                setBusy(false);
+                inputEl.value = '';
+                inputEl.focus();
+            }
+        });
+
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            try { 
+                if (head.stopSpeaking) head.stopSpeaking(); 
+            } catch (e) {
+                console.warn('Stop speaking failed:', e);
+            }
+        });
+
+        // Test functions
+        window.testHealth = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`, {
+                    headers: { 'x-aenki-key': TOKEN || '' }
+                });
+                const data = await response.json();
+                showToast(`Health: ${response.status} - ${data.ok ? 'OK' : 'Failed'}`);
+                console.log('Health response:', data);
+            } catch (error) {
+                showToast(`Health failed: ${error.message}`);
+            }
+        };
+
+        window.testChat = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-aenki-key': TOKEN || ''
+                    },
+                    body: JSON.stringify({ text: 'Hola AeNKI', history: [], avatarId: 'test' })
+                });
+                const data = await response.json();
+                showToast(`Chat: ${response.status} - ${data.reply ? 'OK' : 'Failed'}`);
+                console.log('Chat response:', data);
+            } catch (error) {
+                showToast(`Chat failed: ${error.message}`);
+            }
+        };
+
+        window.testTTS = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/tts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-aenki-key': TOKEN || ''
+                    },
+                    body: JSON.stringify({ text: 'Hola, soy AeNKI' })
+                });
+                const data = await response.json();
+                showToast(`TTS: ${response.status} - ${data.audio ? 'OK' : 'Failed'}`);
+                console.log('TTS response:', data);
+            } catch (error) {
+                showToast(`TTS failed: ${error.message}`);
+            }
+        };
+
+        // Inicialización
+        Promise.all([
+            checkHealth(),
+            initAvatar()
+        ]).then(() => {
+            console.log('AENKI initialized successfully');
+        }).catch(error => {
+            console.error('Initialization error:', error);
+            showToast('Error al inicializar AENKI');
+        });
+
+        // Re-check health every 30 seconds
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>const statusEl = document.getElementById('status');
+const healthEl = document.getElementById('health');
+const loadingEl = document.getElementById('loading');
+const inputEl = document.getElementById('text');
+const sendBtn = document.getElementById('send');
+const stopBtn = document.getElementById('stop');
+const toastEl = document.getElementById('toast');
+
+let head, history = [];
+const avatarId = 'default';
+
+// Health check y configuración inicial
+    async function checkHealth() {
+      try {
+        const response = await fetch(`${API_BASE}/api/health`, {
+          headers: { 'x-aenki-key': TOKEN || '' }
+        });
+        const health = await response.json();    if (health.ok) {
+      healthEl.textContent = `Modelo: ${health.model} | Key: ${health.hasOpenAIKey ? 'OK' : 'NO'}`;
+      healthEl.style.color = health.hasOpenAIKey ? '#00e5ff' : '#ffa500';
+    } else {
+      healthEl.textContent = 'Backend no disponible';
+      healthEl.style.color = '#ff453a';
+    }
+  } catch (error) {
+    healthEl.textContent = 'Sin conexión al backend';
+    healthEl.style.color = '#ff453a';
+    showToast('Error de conexión con el backend');
+  }
+}
+
+async function initAvatar() {
+  const nodeAvatar = document.getElementById('avatar');
+  
+  // Intentar importar configuración si existe
+  let ttsEndpoint = `${API_BASE}/api/tts`;
+  let voiceId = 'es-ES-Standard-A';
+  
+  try {
+    if (window.site?.endpoints?.tts) {
+      ttsEndpoint = window.site.endpoints.tts;
+    }
+    if (window.site?.googleVoices?.['es-F']?.id) {
+      voiceId = window.site.googleVoices['es-F'].id;
+    }
+  } catch (e) {
+    console.log('No site config found, using defaults');
+  }
+
+      head = new TalkingHead(nodeAvatar, {
+        ttsEndpoint,
+        ttsApikey: TOKEN || '',
+        lipsyncModules: ["es", "en"],
+        cameraView: "upper"
+      });  try {
+    loadingEl.textContent = "Cargando modelo…";
+    await head.showAvatar({
+      url: 'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png',
+      body: 'F',
+      avatarMood: 'neutral',
+      ttsLang: "es-ES",
+      ttsVoice: voiceId,
+      lipsyncLang: 'es'
+    }, (ev) => {
+      if (ev.lengthComputable) {
+        const val = Math.min(100, Math.round(ev.loaded / ev.total * 100));
+        loadingEl.textContent = `Cargando ${val}%`;
+      }
+    });
+    loadingEl.style.display = 'none';
+    statusEl.textContent = "Listo";
+  } catch (err) {
+    console.error(err);
+    loadingEl.textContent = `Error: ${err}`;
+    showToast('Error al cargar el avatar');
+  }
+
+  // Pausa animación cuando pestaña no visible
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") head.start(); else head.stop();
+  });
+}
+
+    async function askAenki(text) {
+      const response = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json', 'x-aenki-key': TOKEN || ''},
+        body: JSON.stringify({ text, history, avatarId })
+      });  const data = await response.json();
+  
+  if (!response.ok) {
+    if (response.status === 502) {
+      throw new Error('Servidor no disponible (502)');
+    }
+    throw new Error(data?.error || 'Fallo /api/chat');
+  }
+  
+  return data.reply || '';
+}
+
+// UX helpers
+function setBusy(busy) {
+  sendBtn.disabled = busy;
+  inputEl.disabled = busy;
+  statusEl.textContent = busy ? 'Pensando…' : 'Listo';
+}
+
+function showToast(message) {
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 3000);
+}
+
+// Event listeners
+sendBtn.addEventListener('click', async () => {
+  const userText = (inputEl.value || '').trim();
+  if (!userText) return inputEl.focus();
+
+  setBusy(true);
+  try {
+    history.push({ role:'user', content:userText });
+    const reply = await askAenki(userText);
+    history.push({ role:'assistant', content:reply });
+
+    // Habla con el avatar
+    await head.speakText(reply);
+  } catch (error) {
+    console.error(error);
+    showToast(error.message);
+  } finally {
+    setBusy(false);
+    inputEl.value = '';
+    inputEl.focus();
+  }
+});
+
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendBtn.click();
+  }
+});
+
+stopBtn.addEventListener('click', () => {
+  try { 
+    if (head.stopSpeaking) head.stopSpeaking(); 
+  } catch (e) {
+    console.warn('Stop speaking failed:', e);
+  }
+});
+
+// Inicialización con logs de debug
+console.log('🚀 Iniciando AeNKI...');
+console.log('📍 API_BASE:', API_BASE);
+console.log('🔑 TOKEN:', TOKEN);
+
+Promise.all([
+  checkHealth().then(() => console.log('✅ Health check completado')),
+  initAvatar().then(() => console.log('✅ Avatar inicializado'))
+]).then(() => {
+  console.log('🎉 AENKI initialized successfully');
+  showToast('AeNKI iniciado correctamente');
+}).catch(error => {
+  console.error('❌ Initialization error:', error);
+  showToast(`Error al inicializar AENKI: ${error.message}`);
+});
+
+// Re-check health every 30 seconds
+setInterval(checkHealth, 30000);

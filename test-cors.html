@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test CORS AeNKI</title>
+</head>
+<body>
+    <h1>Test de Conectividad AeNKI</h1>
+    <div id="status">Iniciando...</div>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        const TOKEN = 'dev';
+        
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`, {
+                    headers: { 'x-aenki-key': TOKEN }
+                });
+                const data = await response.json();
+                document.getElementById('results').innerHTML += 
+                    `<p>✅ Health Check: ${JSON.stringify(data, null, 2)}</p>`;
+            } catch (error) {
+                document.getElementById('results').innerHTML += 
+                    `<p>❌ Health Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testChat() {
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-aenki-key': TOKEN
+                    },
+                    body: JSON.stringify({
+                        text: "Test de conectividad",
+                        history: [],
+                        avatarId: "test"
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('results').innerHTML += 
+                    `<p>✅ Chat Response: ${JSON.stringify(data, null, 2)}</p>`;
+            } catch (error) {
+                document.getElementById('results').innerHTML += 
+                    `<p>❌ Chat Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Ejecutar tests
+        document.getElementById('status').textContent = 'Ejecutando tests...';
+        testHealth().then(() => testChat()).then(() => {
+            document.getElementById('status').textContent = 'Tests completados';
+        });
+    </script>
+</body>
+</html>

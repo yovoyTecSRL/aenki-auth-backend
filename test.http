@@ -1,0 +1,114 @@
+### AeNKI Backend API Tests
+### Use REST Client extension in VS Code
+
+@host = http://127.0.0.1:8000
+@apikey = your-test-api-key-here
+
+### Health Check (No auth required)
+GET {{host}}/api/health
+
+### Get Service Info
+GET {{host}}
+
+### Text-to-Speech
+POST {{host}}/api/tts
+Content-Type: application/json
+x-aenki-key: {{apikey}}
+
+{
+  "text": "Hola, soy AeNKI, tu asistente de longevidad y salud.",
+  "language": "es-ES"
+}
+
+### Get TTS Voices
+GET {{host}}/api/tts/voices
+x-aenki-key: {{apikey}}
+
+### Train with text content
+POST {{host}}/api/train
+Content-Type: application/json
+x-aenki-key: {{apikey}}
+
+{
+  "content": "La restricción calórica ha demostrado extender la longevidad en múltiples especies. Los estudios en ratones muestran que una reducción del 20-30% en la ingesta calórica puede aumentar la esperanza de vida hasta un 40%.",
+  "metadata": {
+    "topic": "caloric restriction",
+    "source": "research"
+  }
+}
+
+### Train with URLs
+POST {{host}}/api/train
+Content-Type: application/json
+x-aenki-key: {{apikey}}
+
+{
+  "urls": [
+    "https://en.wikipedia.org/wiki/Longevity",
+    "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6013206/"
+  ],
+  "metadata": {
+    "topic": "longevity research"
+  }
+}
+
+### Chat with AeNKI
+POST {{host}}/api/chat
+Content-Type: application/json
+x-aenki-key: {{apikey}}
+
+{
+  "message": "¿Cuáles son los beneficios de la restricción calórica para la longevidad?",
+  "searchKnowledge": true,
+  "maxTokens": 500
+}
+
+### Chat capabilities
+GET {{host}}/api/chat/capabilities
+x-aenki-key: {{apikey}}
+
+### Get Statistics
+GET {{host}}/api/stats
+x-aenki-key: {{apikey}}
+
+### Knowledge Statistics
+GET {{host}}/api/stats/knowledge
+x-aenki-key: {{apikey}}
+
+### System Health
+GET {{host}}/api/stats/health
+x-aenki-key: {{apikey}}
+
+### Search Knowledge
+GET {{host}}/api/search?query=longevidad&threshold=0.6&limit=5
+x-aenki-key: {{apikey}}
+
+### Advanced Search
+POST {{host}}/api/search
+Content-Type: application/json
+x-aenki-key: {{apikey}}
+
+{
+  "query": "restricción calórica",
+  "threshold": 0.5,
+  "limit": 10,
+  "filters": {
+    "source": "research",
+    "type": "text"
+  }
+}
+
+### Search Suggestions
+GET {{host}}/api/search/suggestions?q=long
+x-aenki-key: {{apikey}}
+
+### Training Status
+GET {{host}}/api/train/status
+x-aenki-key: {{apikey}}
+
+### File Upload (use multipart/form-data)
+# POST {{host}}/api/upload
+# Content-Type: multipart/form-data
+# x-aenki-key: {{apikey}}
+# 
+# files: [select files]

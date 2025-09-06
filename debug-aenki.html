@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeNKI - Debug Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f0f23;
+            color: white;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+        .success { background: #1a5d1a; border-color: #4caf50; }
+        .error { background: #5d1a1a; border-color: #f44336; }
+        .warning { background: #5d4c1a; border-color: #ff9800; }
+        
+        textarea {
+            width: 100%;
+            height: 100px;
+            background: #1a1a3a;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #00e5ff;
+            color: #0f0f23;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #00b8cc;
+        }
+        
+        #results {
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            background: #1a1a3a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #00e5ff;
+        }
+        
+        pre {
+            background: #0a0a1a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AeNKI - Debug y Test Interface</h1>
+        
+        <div id="connection-status" class="status warning">
+            🔄 Verificando conexión...
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 Tests de Conectividad</h2>
+            <button onclick="testHealth()">✅ Test Health</button>
+            <button onclick="testChatSimple()">💬 Test Chat Simple</button>
+            <button onclick="testTTS()">🔊 Test TTS</button>
+            <button onclick="clearResults()">🗑️ Limpiar</button>
+        </div>
+        
+        <div class="chat-section">
+            <h2>💬 Chat Interactivo</h2>
+            <textarea id="messageInput" placeholder="Escribe tu mensaje sobre longevidad..."></textarea>
+            <br>
+            <button onclick="sendMessage()">Enviar Mensaje</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        const TOKEN = 'dev-aenki-token';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            item.innerHTML = `
+                <strong>[${timestamp}] ${type.toUpperCase()}:</strong><br>
+                <pre>${typeof message === 'object' ? JSON.stringify(message, null, 2) : message}</pre>
+            `;
+            
+            results.insertBefore(item, results.firstChild);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function testHealth() {
+            log('🔍 Iniciando Health Check...');
+            try {
+                const response = await fetch(`${API_BASE}/api/health`, {
+                    headers: { 'x-aenki-key': TOKEN }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Health Check exitoso:', 'success');
+                    log(data, 'info');
+                    
+                    updateConnectionStatus('success', '✅ Backend conectado y funcionando');
+                } else {
+                    log(`❌ Health Check falló: ${response.status}`, 'error');
+                    updateConnectionStatus('error', '❌ Backend no responde correctamente');
+                }
+            } catch (error) {
+                log(`❌ Error en Health Check: ${error.message}`, 'error');
+                updateConnectionStatus('error', '❌ No se puede conectar al backend');
+            }
+        }
+        
+        async function testChatSimple() {
+            log('💬 Iniciando Chat Test...');
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-aenki-key': TOKEN
+                    },
+                    body: JSON.stringify({
+                        text: "Hola AeNKI, ¿cómo puedo mejorar mi longevidad?",
+                        history: [],
+                        avatarId: "debug-test"
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Chat Test exitoso:', 'success');
+                    log(data, 'info');
+                } else {
+                    log(`❌ Chat Test falló: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error en Chat Test: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testTTS() {
+            log('🔊 Iniciando TTS Test...');
+            try {
+                const response = await fetch(`${API_BASE}/api/tts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-aenki-key': TOKEN
+                    },
+                    body: JSON.stringify({
+                        text: "Este es un test de síntesis de voz",
+                        voice: "es-ES-Standard-A",
+                        speed: 1.0
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ TTS Test exitoso:', 'success');
+                    log(data, 'info');
+                } else {
+                    log(`❌ TTS Test falló: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error en TTS Test: ${error.message}`, 'error');
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) {
+                log('⚠️ Por favor escribe un mensaje', 'warning');
+                return;
+            }
+            
+            log(`📤 Enviando: "${message}"`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-aenki-key': TOKEN
+                    },
+                    body: JSON.stringify({
+                        text: message,
+                        history: [],
+                        avatarId: "interactive"
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('📥 Respuesta recibida:', 'success');
+                    log(`AeNKI: ${data.reply}`, 'info');
+                    input.value = '';
+                } else {
+                    log(`❌ Error al enviar mensaje: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function updateConnectionStatus(type, message) {
+            const status = document.getElementById('connection-status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+        
+        // Auto-ejecutar health check al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🚀 AeNKI Debug Interface iniciada');
+            setTimeout(testHealth, 1000);
+        });
+        
+        // Permitir envío con Enter
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

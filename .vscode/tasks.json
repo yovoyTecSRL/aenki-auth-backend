@@ -1,0 +1,129 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🚀 T-LOCAL: Start AeNKI Auth Server",
+            "type": "shell",
+            "command": "npm",
+            "args": ["start"],
+            "group": "build",
+            "isBackground": false,
+            "runOptions": {
+                "runOn": "default"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false,
+                "group": "aenki-terminals"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🌐 T-SSH: Connect to Production Server",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command", 
+                "Write-Host '🔐 Connecting to production server...'; Write-Host 'Server IP: To be configured'; Write-Host 'Usage: ssh root@YOUR_SERVER_IP'; Write-Host 'Commands:'; Write-Host '  cd /opt/aenki-auth-node'; Write-Host '  pm2 status aenki-auth'; Write-Host '  pm2 logs aenki-auth'; Write-Host '  systemctl status nginx'; pause"
+            ],
+            "group": "build",
+            "isBackground": false,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false,
+                "group": "aenki-terminals"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "⚙️ T-NGINX: Server Configuration",
+            "type": "shell", 
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "Write-Host '🔧 NGINX Configuration Terminal'; Write-Host 'Server commands for NGINX management:'; Write-Host ''; Write-Host 'Configuration:'; Write-Host '  sudo nano /etc/nginx/sites-available/aenki.idotec.online'; Write-Host '  sudo ln -sf /etc/nginx/sites-available/aenki.idotec.online /etc/nginx/sites-enabled/'; Write-Host ''; Write-Host 'Testing:'; Write-Host '  sudo nginx -t'; Write-Host '  sudo systemctl reload nginx'; Write-Host ''; Write-Host 'SSL:'; Write-Host '  sudo certbot --nginx -d aenki.idotec.online'; Write-Host ''; Write-Host 'Status:'; Write-Host '  sudo systemctl status nginx'; pause"
+            ],
+            "group": "build",
+            "isBackground": false,
+            "presentation": {
+                "echo": true,
+                "reveal": "always", 
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false,
+                "group": "aenki-terminals"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "📊 T-LOGS: Monitor Production Logs",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "Write-Host '📊 Production Logs Monitor'; Write-Host 'Log monitoring commands:'; Write-Host ''; Write-Host 'Application Logs:'; Write-Host '  pm2 logs aenki-auth --lines 50'; Write-Host '  pm2 logs aenki-auth --follow'; Write-Host ''; Write-Host 'NGINX Logs:'; Write-Host '  tail -f /var/log/nginx/access.log'; Write-Host '  tail -f /var/log/nginx/error.log'; Write-Host ''; Write-Host 'System Logs:'; Write-Host '  journalctl -u nginx -f'; Write-Host '  journalctl -u pm2* -f'; Write-Host ''; Write-Host 'Health Check:'; Write-Host '  curl -s https://aenki.idotec.online/api/health | jq'; pause"
+            ],
+            "group": "build", 
+            "isBackground": false,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false,
+                "group": "aenki-terminals"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🧪 DNS Check: Verify Domain Resolution",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "Write-Host '🌐 DNS Verification for aenki.idotec.online'; Write-Host ''; nslookup aenki.idotec.online; Write-Host ''; Write-Host 'Ping test:'; ping -n 4 aenki.idotec.online; Write-Host ''; Write-Host 'If DNS is not resolving, configure A record:'; Write-Host 'Type: A'; Write-Host 'Name: aenki'; Write-Host 'Value: YOUR_SERVER_IP'; Write-Host 'TTL: 300'; pause"
+            ],
+            "group": "test",
+            "isBackground": false,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🏗️ Deploy: Complete Production Deployment",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "$env:DOMAIN='aenki.idotec.online'; $env:APP_PORT='8005'; Write-Host '🚀 AeNKI Auth Production Deployment'; Write-Host 'Domain: $env:DOMAIN'; Write-Host 'Port: $env:APP_PORT'; Write-Host ''; Write-Host 'Steps to complete on server:'; Write-Host '1. Upload project files to /opt/aenki-auth-node'; Write-Host '2. Configure .env with production values'; Write-Host '3. npm install --production'; Write-Host '4. pm2 start server.js --name aenki-auth'; Write-Host '5. Configure NGINX reverse proxy'; Write-Host '6. Setup SSL with certbot'; Write-Host '7. Test endpoints'; Write-Host ''; Write-Host 'Run individual tasks for detailed guidance.'; pause"
+            ],
+            "group": "build",
+            "isBackground": false,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}
